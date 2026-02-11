@@ -2,7 +2,7 @@
     "name": "Kontrakcie - Sledovanie pôrodu",
     "short_name": "Kontrakcie",
     "description": "Jednoduchá aplikácia na meranie a analýzu kontrakcií",
-    "start_url": "/index.html",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#667eea",
     "theme_color": "#667eea",
