@@ -1,6 +1,6 @@
 const CACHE_NAME = 'kontrakcie-v1';
 const urlsToCache = [
-    '/kontrakcie-tracker.html',
+    '/index.html',
     '/manifest.json',
     'https://cdn.jsdelivr.net/npm/chart.js'
 ];
