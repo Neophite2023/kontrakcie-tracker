@@ -1,7 +1,9 @@
-const CACHE_NAME = 'kontrakcie-v1';
+const CACHE_NAME = 'kontrakcie-v2';
 const urlsToCache = [
-    '/index.html',
-    '/manifest.json',
+    './',
+    './index.html',
+    './manifest.json',
+    './sw.js',
     'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
@@ -12,6 +14,9 @@ self.addEventListener('install', function(event) {
             .then(function(cache) {
                 console.log('Cache opened');
                 return cache.addAll(urlsToCache);
+            })
+            .then(function() {
+                return self.skipWaiting();
             })
     );
 });
@@ -25,22 +30,30 @@ self.addEventListener('fetch', function(event) {
                 if (response) {
                     return response;
                 }
-                return fetch(event.request);
+                return fetch(event.request).catch(function() {
+                    // If fetch fails, try to return index.html for navigation requests
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html');
+                    }
+                });
             })
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(cacheNames) {
             return Promise.all(
                 cacheNames.map(function(cacheName) {
                     if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
+        }).then(function() {
+            return self.clients.claim();
         })
     );
 });

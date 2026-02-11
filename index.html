@@ -924,16 +924,27 @@
             updateDisplay();
         };
         
-        // Register Service Worker for offline functionality
+        // Clear old caches and register Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js')
-                    .then(function(registration) {
-                        console.log('Service Worker registered:', registration);
+            // Clear old caches first
+            caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                        if (cacheName !== 'kontrakcie-v2') {
+                            console.log('Deleting old cache:', cacheName);
+                            return caches.delete(cacheName);
+                        }
                     })
-                    .catch(function(error) {
-                        console.log('Service Worker registration failed:', error);
-                    });
+                );
+            }).then(function() {
+                // Register new service worker
+                return navigator.serviceWorker.register('sw.js');
+            }).then(function(registration) {
+                console.log('Service Worker registered:', registration);
+                // Force update
+                registration.update();
+            }).catch(function(error) {
+                console.log('Service Worker registration failed:', error);
             });
         }
         
@@ -941,6 +952,12 @@
         if (window.navigator.standalone) {
             console.log('Running in standalone mode on iOS');
             document.body.classList.add('ios-standalone');
+        }
+        
+        // Force reload if opened from home screen and not loaded correctly
+        if (window.navigator.standalone && window.location.pathname !== '/kontrakcie-tracker/' && window.location.pathname !== '/kontrakcie-tracker/index.html') {
+            console.log('Redirecting to correct URL');
+            window.location.href = 'https://neophite2023.github.io/kontrakcie-tracker/';
         }
     </script>
 </body>
