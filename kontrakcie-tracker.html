@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kontrakcie">
+    <meta name="theme-color" content="#667eea">
+    <title>Kontrakcie - Sledovanie pôrodu</title>
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" href="icon-120.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+    
+    <!-- Splash screens -->
+    <link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-orange: #FF9500;
+            --ios-gray: #8E8E93;
+            --ios-light-gray: #F2F2F7;
+            --ios-bg: #F2F2F7;
+            --ios-card: rgba(255, 255, 255, 0.85);
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+        
+        .header h1 { 
+            font-size: 2em; 
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+        
+        .header p { 
+            color: var(--ios-gray);
+            font-size: 1em;
+            font-weight: 400;
+        }
+        
+        .card {
+            background: var(--ios-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .timer-section {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .timer-display {
+            font-size: 4.5em;
+            font-weight: 300;
+            color: #000;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn-start {
+            background: var(--ios-green);
+            color: white;
+        }
+        
+        .btn-stop {
+            background: var(--ios-red);
+            color: white;
+        }
+        
+        .btn-save {
+            background: var(--ios-blue);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+            padding: 14px 20px;
+            border-radius: 14px;
+            text-align: center;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .status-waiting { 
+            background: rgba(0, 122, 255, 0.1); 
+            color: var(--ios-blue); 
+        }
+        .status-early { 
+            background: rgba(255, 149, 0, 0.1); 
+            color: var(--ios-orange); 
+        }
+        .status-active { 
+            background: rgba(255, 59, 48, 0.1); 
+            color: var(--ios-red); 
+        }
+        .status-go { 
+            background: rgba(52, 199, 89, 0.1); 
+            color: var(--ios-green); 
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            background: rgba(255,255,255,0.6);
+            padding: 20px 15px;
+            border-radius: 16px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #000;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .stat-label {
+            color: var(--ios-gray);
+            margin-top: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .intensity-slider {
+            width: 100%;
+            margin: 24px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--ios-light-gray);
+            outline: none;
+        }
+        
+        .intensity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--ios-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+            border: 3px solid white;
+        }
+        
+        .intensity-slider::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--ios-blue);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+        }
+        
+        .intensity-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            color: var(--ios-gray);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .contraction-list {
+            max-height: 350px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .contraction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+        }
+        
+        .contraction-item:active {
+            background: rgba(255,255,255,0.8);
+            transform: scale(0.98);
+        }
+        
+        .intensity-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .intensity-low { 
+            background: rgba(52, 199, 89, 0.15); 
+            color: #248A3D; 
+        }
+        .intensity-medium { 
+            background: rgba(255, 149, 0, 0.15); 
+            color: #C93400; 
+        }
+        .intensity-high { 
+            background: rgba(255, 59, 48, 0.15); 
+            color: #C41C14; 
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 16px;
+            padding: 16px;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #000;
+            font-size: 1em;
+        }
+        
+        .input-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            min-height: 80px;
+        }
+        
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--ios-blue);
+            background: rgba(255,255,255,0.9);
+        }
+        
+        .disclaimer {
+            background: rgba(255, 204, 0, 0.1);
+            border: 1px solid rgba(255, 204, 0, 0.2);
+            color: #9A7B00;
+            padding: 18px;
+            border-radius: 14px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .btn-clear {
+            background: var(--ios-gray);
+            color: white;
+            padding: 14px 28px;
+            font-size: 1em;
+            font-weight: 600;
+        }
+        
+        .btn-delete {
+            background: var(--ios-red);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255,59,48,0.3);
+        }
+        
+        .btn-delete:active {
+            transform: scale(0.9);
+            box-shadow: 0 1px 4px rgba(255,59,48,0.3);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 36px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 18px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #30D158, #30B350);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .rule-511 {
+            background: rgba(0, 122, 255, 0.08);
+            padding: 18px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .rule-met {
+            background: rgba(48, 209, 88, 0.12);
+            border: 1px solid rgba(48, 209, 88, 0.3);
+            color: #248A3D;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 16px;
+            }
+            
+            .header {
+                padding-top: 10px;
+            }
+            
+            .header h1 { 
+                font-size: 1.6em; 
+            }
+            
+            .timer-display { 
+                font-size: 3.2em; 
+            }
+            
+            .btn { 
+                padding: 14px 24px; 
+                font-size: 1em;
+                margin: 6px;
+            }
+            
+            .card {
+                padding: 20px;
+                margin-bottom: 12px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-box {
+                padding: 16px 12px;
+            }
+            
+            .stat-value {
+                font-size: 1.5em;
+            }
+        }
+        
+        /* iOS Safe Areas - Notch support */
+        body {
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+            padding-left: env(safe-area-inset-left, 20px);
+            padding-right: env(safe-area-inset-right, 20px);
+        }
+        
+        /* iOS Standalone Mode specific styles */
+        @media all and (display-mode: standalone) {
+            body {
+                background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+            }
+            
+            .header {
+                padding-top: 40px;
+            }
+        }
+        
+        /* iOS Touch optimization */
+        .btn, .btn-delete {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        /* Prevent text selection on UI elements */
+        .timer-display, .stat-value, .btn {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Card title styling */
+        .card h2 {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #000;
+        }
+        
+        /* iOS-style section dividers */
+        .card:not(:last-child)::after {
+            content: '';
+            display: block;
+            height: 1px;
+            background: rgba(0,0,0,0.05);
+            margin: 20px -24px -24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sledovanie kontrakcií</h1>
+            <p>Meranie a analýza kontrakcií</p>
+        </div>
+
+        <div class="card">
+            <div id="status" class="status status-waiting">
+                Čaká sa na prvú kontrakciu
+            </div>
+            
+            <div class="timer-section">
+                <div id="timerDisplay" class="timer-display">00:00</div>
+                <button id="btnStart" class="btn btn-start" onclick="startContraction()">
+                    Začiatok kontrakcie
+                </button>
+                <button id="btnStop" class="btn btn-stop" onclick="stopContraction()" disabled>
+                    Koniec kontrakcie
+                </button>
+                <button id="btnSave" class="btn btn-save" onclick="saveContraction()" disabled>
+                    Uložiť
+                </button>
+            </div>
+
+            <div class="input-group">
+                <label for="intensity">Intenzita kontrakcie (1-10)</label>
+                <input type="range" id="intensity" class="intensity-slider" min="1" max="10" value="5">
+                <div class="intensity-labels">
+                    <span>Slabá</span>
+                    <span>Stredná</span>
+                    <span>Silná</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="notes">Poznámky</label>
+                <textarea id="notes" rows="2" placeholder="Ako sa cítite? Aké sú symptómy?"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Štatistika poslednej hodiny</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div id="avgDuration" class="stat-value">--</div>
+                    <div class="stat-label">Priemerná dĺžka</div>
+                </div>
+                <div class="stat-box">
+                    <div id="avgInterval" class="stat-value">--</div>
+                    <div class="stat-label">Priemerný interval</div>
+                </div>
+                <div class="stat-box">
+                    <div id="contractionCount" class="stat-value">0</div>
+                    <div class="stat-label">Počet kontrakcií</div>
+                </div>
+                <div class="stat-box">
+                    <div id="lastInterval" class="stat-value">--</div>
+                    <div class="stat-label">Posledný interval</div>
+                </div>
+            </div>
+
+            <div id="rule511" class="rule-511">
+                <strong>Pravidlo 5-1-1</strong><br>
+                Interval: <span id="ruleInterval">--</span> min | 
+                Dĺžka: <span id="ruleDuration">--</span> min | 
+                Trvanie: <span id="ruleTime">--</span> min
+            </div>
+
+            <div class="progress-bar">
+                <div id="progressBar" class="progress-fill" style="width: 0%">
+                    0%
+                </div>
+            </div>
+            <p style="text-align: center; color: var(--ios-gray); font-size: 0.9em; margin-top: 8px;">Priblíženie k pôrodu</p>
+        </div>
+
+        <div class="card">
+            <h2>Trend kontrakcií</h2>
+            <div class="chart-container">
+                <canvas id="contractionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>História kontrakcií</h2>
+            <div id="contractionList" class="contraction-list">
+                <p style="text-align: center; color: var(--ios-gray); padding: 20px;">
+                    Zatiaľ žiadne zaznamenané kontrakcie
+                </p>
+            </div>
+            <button class="btn btn-clear" onclick="clearAllData()">
+                Vymazať všetky dáta
+            </button>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Dôležité upozornenie</strong><br>
+            Táto aplikácia slúži len na informačné účely a nie je náhradou za odborné lekárske vyšetrenie. 
+            Vždy konzultujte svojho lekára alebo pôrodnú asistentku. Pri akýchkoľvek obavách okamžite 
+            kontaktujte zdravotnícke zariadenie.
+        </div>
+    </div>
+
+    <script>
+        let contractions = JSON.parse(localStorage.getItem('contractions') || '[]');
+        let currentContraction = null;
+        let timerInterval = null;
+        let chart = null;
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('contractionChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Dĺžka kontrakcie (sek)',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Interval (min)',
+                        data: [],
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function startContraction() {
+            currentContraction = {
+                startTime: new Date(),
+                endTime: null,
+                duration: 0,
+                intensity: parseInt(document.getElementById('intensity').value),
+                notes: document.getElementById('notes').value
+            };
+
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('status').className = 'status status-active';
+            document.getElementById('status').innerHTML = 'Kontrakcia prebieha...';
+
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopContraction() {
+            if (!currentContraction) return;
+
+            clearInterval(timerInterval);
+            currentContraction.endTime = new Date();
+            currentContraction.duration = Math.round(
+                (currentContraction.endTime - currentContraction.startTime) / 1000
+            );
+
+            // Update intensity and notes from current input values
+            currentContraction.intensity = parseInt(document.getElementById('intensity').value);
+            currentContraction.notes = document.getElementById('notes').value;
+
+            // Enable save button, keep start disabled until saved
+            document.getElementById('btnSave').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            
+            document.getElementById('status').className = 'status status-waiting';
+            document.getElementById('status').innerHTML = 'Kontrakcia ukončená - uložte ju';
+        }
+
+        function saveContraction() {
+            if (!currentContraction) return;
+
+            contractions.push(currentContraction);
+            localStorage.setItem('contractions', JSON.stringify(contractions));
+
+            // Reset UI
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnSave').disabled = true;
+            document.getElementById('timerDisplay').textContent = '00:00';
+            document.getElementById('notes').value = '';
+            
+            currentContraction = null;
+
+            updateDisplay();
+        }
+
+        function updateTimer() {
+            if (!currentContraction) return;
+            
+            const elapsed = Math.round((new Date() - currentContraction.startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            const now = new Date();
+            const oneHourAgo = new Date(now - 60 * 60 * 1000);
+            
+            // Filter contractions from last hour
+            const recentContractions = contractions.filter(c => new Date(c.startTime) > oneHourAgo);
+            
+            if (recentContractions.length === 0) {
+                document.getElementById('status').className = 'status status-waiting';
+                document.getElementById('status').innerHTML = 'Čaká sa na prvú kontrakciu';
+                // Reset all stats
+                document.getElementById('avgDuration').textContent = '--';
+                document.getElementById('avgInterval').textContent = '--';
+                document.getElementById('contractionCount').textContent = '0';
+                document.getElementById('lastInterval').textContent = '--';
+                document.getElementById('ruleInterval').textContent = '--';
+                document.getElementById('ruleDuration').textContent = '--';
+                document.getElementById('ruleTime').textContent = '--';
+                document.getElementById('rule511').classList.remove('rule-met');
+                document.getElementById('rule511').innerHTML = '<strong>Pravidlo 5-1-1</strong><br>Interval: <span id="ruleInterval">--</span> min | Dĺžka: <span id="ruleDuration">--</span> min | Trvanie: <span id="ruleTime">--</span> min';
+                document.getElementById('progressBar').style.width = '0%';
+                document.getElementById('progressBar').textContent = '0%';
+                // Update chart and list
+                updateChart();
+                updateContractionList();
+                return;
+            }
+
+            // Calculate statistics
+            const durations = recentContractions.map(c => c.duration);
+            const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
+            
+            // Calculate intervals
+            const intervals = [];
+            for (let i = 1; i < recentContractions.length; i++) {
+                const interval = (new Date(recentContractions[i].startTime) - 
+                                new Date(recentContractions[i-1].startTime)) / 1000 / 60;
+                intervals.push(interval);
+            }
+            const avgInterval = intervals.length > 0 ? 
+                intervals.reduce((a, b) => a + b, 0) / intervals.length : 0;
+            
+            // Update stats display
+            document.getElementById('avgDuration').textContent = 
+                Math.round(avgDuration) + 's';
+            document.getElementById('avgInterval').textContent = 
+                avgInterval > 0 ? Math.round(avgInterval) + 'min' : '--';
+            document.getElementById('contractionCount').textContent = recentContractions.length;
+            document.getElementById('lastInterval').textContent = 
+                intervals.length > 0 ? Math.round(intervals[intervals.length-1]) + 'min' : '--';
+
+            // Update status based on 5-1-1 rule and patterns
+            updateStatus(recentContractions, avgDuration, avgInterval);
+
+            // Update 5-1-1 rule display
+            updateRule511(recentContractions, avgDuration, avgInterval);
+
+            // Update progress bar
+            updateProgressBar(recentContractions, avgDuration, avgInterval);
+
+            // Update chart
+            updateChart();
+
+            // Update list
+            updateContractionList();
+        }
+
+        function updateStatus(contractions, avgDuration, avgInterval) {
+            const statusEl = document.getElementById('status');
+            
+            // Check 5-1-1 rule (5 min interval, 1 min duration, 1 hour of contractions)
+            const meets511 = avgInterval <= 6 && avgDuration >= 45 && contractions.length >= 5;
+            
+            if (meets511) {
+                statusEl.className = 'status status-go';
+                statusEl.innerHTML = 'Je čas ísť do pôrodnice! Kontrakcie sú pravidelné.';
+            } else if (avgInterval <= 10 && avgDuration >= 30) {
+                statusEl.className = 'status status-active';
+                statusEl.innerHTML = 'Aktívna fáza - kontrakcie sa zintenzívnili';
+            } else if (contractions.length >= 3) {
+                statusEl.className = 'status status-early';
+                statusEl.innerHTML = 'Skorá fáza - sledujte postup';
+            } else {
+                statusEl.className = 'status status-waiting';
+                statusEl.innerHTML = 'Prvá fáza - zaznamenávam kontrakcie';
+            }
+        }
+
+        function updateRule511(contractions, avgDuration, avgInterval) {
+            const oneHourAgo = new Date(new Date() - 60 * 60 * 1000);
+            const timeSinceFirst = contractions.length > 0 ? 
+                Math.round((new Date() - new Date(contractions[contractions.length-1].startTime)) / 60000) : 0;
+            
+            document.getElementById('ruleInterval').textContent = 
+                avgInterval > 0 ? Math.round(avgInterval) : '--';
+            document.getElementById('ruleDuration').textContent = 
+                Math.round(avgDuration / 60 * 10) / 10;
+            document.getElementById('ruleTime').textContent = timeSinceFirst;
+            
+            // Check if 5-1-1 rule is met
+            const meets511 = avgInterval <= 6 && avgDuration >= 45 && contractions.length >= 5;
+            const ruleEl = document.getElementById('rule511');
+            
+            if (meets511) {
+                ruleEl.classList.add('rule-met');
+                ruleEl.innerHTML = '<strong>Pravidlo 5-1-1 je splnené</strong><br>Je čas ísť do pôrodnice.';
+            } else {
+                ruleEl.classList.remove('rule-met');
+            }
+        }
+
+        function updateProgressBar(contractions, avgDuration, avgInterval) {
+            let progress = 0;
+            
+            if (contractions.length >= 3) progress += 20;
+            if (contractions.length >= 5) progress += 20;
+            if (avgDuration >= 30) progress += 20;
+            if (avgDuration >= 45) progress += 20;
+            if (avgInterval <= 10) progress += 10;
+            if (avgInterval <= 6) progress += 10;
+            
+            progress = Math.min(progress, 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+        }
+
+        function updateChart() {
+            if (!chart) return;
+            
+            const labels = contractions.map((c, i) => `#${i + 1}`);
+            const durations = contractions.map(c => c.duration);
+            
+            // Calculate intervals
+            const intervals = [0];
+            for (let i = 1; i < contractions.length; i++) {
+                const interval = (new Date(contractions[i].startTime) - 
+                                new Date(contractions[i-1].startTime)) / 1000 / 60;
+                intervals.push(interval);
+            }
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = durations;
+            chart.data.datasets[1].data = intervals;
+            chart.update();
+        }
+
+        function updateContractionList() {
+            const listEl = document.getElementById('contractionList');
+            
+            if (contractions.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Zatiaľ žiadne zaznamenané kontrakcie</p>';
+                return;
+            }
+            
+            listEl.innerHTML = contractions.slice().reverse().map((c, index) => {
+                const time = new Date(c.startTime).toLocaleTimeString('sk-SK');
+                const duration = c.duration;
+                const intensity = c.intensity;
+                
+                let intensityClass = 'intensity-low';
+                let intensityText = 'Slabá';
+                if (intensity >= 4 && intensity <= 7) {
+                    intensityClass = 'intensity-medium';
+                    intensityText = 'Stredná';
+                } else if (intensity >= 8) {
+                    intensityClass = 'intensity-high';
+                    intensityText = 'Silná';
+                }
+                
+                const actualIndex = contractions.length - 1 - index;
+                return `
+                    <div class="contraction-item">
+                        <div>
+                            <strong>${time}</strong> - ${duration}s
+                            ${c.notes ? '<br><small>' + c.notes + '</small>' : ''}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="intensity-badge ${intensityClass}">
+                                ${intensityText} (${intensity}/10)
+                            </span>
+                            <button onclick="deleteContraction(${actualIndex})" class="btn-delete" title="Vymazať">×</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearAllData() {
+            console.log('clearAllData() volaná');
+            if (confirm('Naozaj chcete vymazať všetky zaznamenané kontrakcie?')) {
+                console.log('Potvrdené - mažem dáta');
+                contractions = [];
+                localStorage.setItem('contractions', JSON.stringify(contractions));
+                console.log('Dáta uložené do localStorage:', localStorage.getItem('contractions'));
+                updateDisplay();
+                alert('Všetky dáta boli vymazané!');
+            }
+        }
+
+        function deleteContraction(index) {
+            console.log('deleteContraction(' + index + ') volaná');
+            if (confirm('Naozaj chcete vymazať túto kontrakciu?')) {
+                console.log('Potvrdené - mažem kontrakciu', index);
+                contractions.splice(index, 1);
+                localStorage.setItem('contractions', JSON.stringify(contractions));
+                console.log('Dáta uložené do localStorage:', localStorage.getItem('contractions'));
+                updateDisplay();
+                alert('Kontrakcia bola vymazaná!');
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initChart();
+            updateDisplay();
+        };
+        
+        // Register Service Worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // iOS standalone mode detection
+        if (window.navigator.standalone) {
+            console.log('Running in standalone mode on iOS');
+            document.body.classList.add('ios-standalone');
+        }
+    </script>
+</body>
+</html>
